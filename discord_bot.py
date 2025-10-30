@@ -21,19 +21,19 @@ POKEMON_DATA_CACHE = {}
 # Mapeamento de Tipos: (Seu Tipo no JSON Limpo/Sem Acento: Tipo Oficial)
 TIPO_MAPPER = {
     'metal': 'STEEL',
-    'psiquico': 'PSYCHIC', # Corrigido para ser usado sem acento
+    'psiquico': 'PSYCHIC',
     'fantasma': 'GHOST',
     'sombrio': 'DARK',
-    'eletrico': 'ELECTRIC', # Corrigido para ser usado sem acento
+    'eletrico': 'ELECTRIC',
     'gelo': 'ICE',
     'voador': 'FLYING',
     'rocha': 'ROCK',
     'lutador': 'FIGHTING',
     'normal': 'NORMAL',
-    'dragao': 'DRAGON', # Corrigido para ser usado sem acento
+    'dragao': 'DRAGON', # Adicionado/Confirmado
     'fada': 'FAIRY',
     'inseto': 'BUG',
-    'aquatico': 'WATER', # Corrigido para ser usado sem acento
+    'aquatico': 'WATER', # CORRIGIDO: Agora mapeia 'aquatico' para 'WATER'
     'venenoso': 'POISON',
     'grama': 'GRASS',
     'fogo': 'FIRE',
@@ -60,10 +60,11 @@ def load_pokemon_data():
     """
     global POKEMON_DATA_CACHE
     
-    # Função simples para remover acentos e padronizar minúsculas antes do lookup
+    # Função simples para remover acentos, cedilha e padronizar minúsculas antes do lookup
     def clean_type_key(name):
         name = name.lower()
-        replacements = {'á': 'a', 'ã': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'õ': 'o', 'ú': 'u', 'ç': 'c'}
+        # Adicionado 'ç' e mais vogais acentuadas para garantir a limpeza
+        replacements = {'á': 'a', 'ã': 'a', 'é': 'e', 'ê': 'e', 'í': 'i', 'ó': 'o', 'õ': 'o', 'ú': 'u', 'ç': 'c'}
         for old, new in replacements.items():
             name = name.replace(old, new)
         return name
@@ -234,7 +235,6 @@ async def check_poke_average(ctx, *, pokemon_name: str):
             dicas_pokebola.append("🌑 **Dusk Ball** (Superior à UB para tipos ROCK/FIGHTING).")
             
         # Yume Ball (NORMAL ou PSYCHIC)
-        # ESTA CONDIÇÃO AGORA DEVE PASSAR para o Bronzor porque 'PSYCHIC' estará na lista 'types'
         if any(t in types for t in ['NORMAL', 'PSYCHIC']):
             dicas_pokebola.append("💭 **Yume Ball** (Superior à UB para tipos NORMAL/PSYCHIC).")
             
@@ -243,6 +243,7 @@ async def check_poke_average(ctx, *, pokemon_name: str):
             dicas_pokebola.append("🐉 **Tale Ball** (Superior à UB para tipos DRAGON/FAIRY).")
             
         # Net Ball (BUG ou WATER)
+        # ESTA CONDIÇÃO DEVE PASSAR para o Blastoise porque 'WATER' estará na lista 'types'
         if any(t in types for t in ['BUG', 'WATER']):
             dicas_pokebola.append("💧 **Net Ball** (Superior à UB para tipos BUG/WATER).")
             
@@ -302,4 +303,3 @@ async def check_poke_average(ctx, *, pokemon_name: str):
 # --- Execução ---
 # Inicia o bot com o token
 bot.run(TOKEN)
-
