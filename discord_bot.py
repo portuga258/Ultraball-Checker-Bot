@@ -10,7 +10,7 @@ import os # Importar a biblioteca os para checar o arquivo local
 # --- Configurações ---
 # ATENÇÃO: Nunca compartilhe este código com o Token em ambientes públicos.
 # TOKEN do seu bot do Discord. Já preenchido com o token fornecido.
-TOKEN = 'os.getenv('DISCORD_TOKEN')'
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 # Nome do arquivo local de dados (deve estar na mesma pasta do bot)
 LOCAL_DATA_FILE = "pokemons.json"
@@ -302,3 +302,4 @@ async def check_poke_average(ctx, *, pokemon_name: str):
 # --- Execução ---
 # Inicia o bot com o token
 bot.run(TOKEN)
+
