@@ -18,6 +18,12 @@ LOCAL_DATA_FILE = "pokemons.json"
 # Variável global para armazenar os dados dos Pokémons carregados.
 POKEMON_DATA_CACHE = {}
 
+# Variável para rastrear a contagem de comandos por usuário (em memória).
+# ATENÇÃO: Esta contagem será perdida se o bot for reiniciado.
+USER_REQUEST_COUNTS = {}
+PIX_KEY = "f88cbe7a-f244-44d8-b6f8-a3a88af516e0"
+PIX_INTERVAL = 10 # Intervalo de requests para pedir PIX
+
 # Mapeamento de Tipos: (Seu Tipo no JSON Limpo/Sem Acento: Tipo Oficial)
 # Este mapeamento inclui TODAS as variações comuns em português (com acento removido)
 # para garantir que todos os Pokémons recebam a sugestão de Pokebola correta.
@@ -213,14 +219,37 @@ async def on_command_error(ctx, error):
 @bot.command(name="poke", pass_context=True)
 async def check_poke_average(ctx, *, pokemon_name: str):
     """
-    Processa o comando !poke <nome do pokemon> e exibe estatísticas em um Embed.
+    Processa o comando !poke <nome do pokemon> e exibe estatísticas em um Embed,
+    e verifica a contagem de comandos para o PIX.
     """
+    global USER_REQUEST_COUNTS
+
     if not POKEMON_DATA_CACHE:
         load_pokemon_data() 
         if not POKEMON_DATA_CACHE:
              await ctx.send(f"❌ **Erro de Dados:** O bot não pode funcionar. Verifique o arquivo '{LOCAL_DATA_FILE}'.")
              return
 
+    # 1. Rastreamento e Solicitação de PIX
+    user_id = str(ctx.author.id)
+    
+    # Inicializa ou incrementa a contagem de requests do usuário
+    USER_REQUEST_COUNTS[user_id] = USER_REQUEST_COUNTS.get(user_id, 0) + 1
+    current_count = USER_REQUEST_COUNTS[user_id]
+
+    # Verifica se a contagem é um múltiplo do intervalo definido (a cada 10 requests)
+    if current_count % PIX_INTERVAL == 0:
+        pix_message = (
+            f"✨ **Aviso de Apoio ao Bot!** ✨\n"
+            f"Você já usou o comando `!poke` **{current_count} vezes**! Incrível!\n\n"
+            f"Se você gosta do bot e gostaria de ajudar a mantê-lo online e atualizado, "
+            f"considere fazer um PIX de qualquer valor para o desenvolvedor.\n"
+            f"🔑 **Chave PIX (E-mail):** `{PIX_KEY}`\n"
+            f"Seu apoio é muito importante! Obrigado!"
+        )
+        await ctx.send(pix_message)
+
+    # 2. Processamento do Comando !poke (Lógica Existente)
     search_key = pokemon_name.lower().strip()
     result = POKEMON_DATA_CACHE.get(search_key)
 
@@ -258,41 +287,41 @@ async def check_poke_average(ctx, *, pokemon_name: str):
 
         # Pokebolas de Profissão (Engenheiro)
         
-        # Moon Ball (GHOST ou DARK)
+        # Moon Ball (GHOST/DARK) - Fantasma/Sombrio/Noturno
         if any(t in types for t in ['GHOST', 'DARK']):
-            dicas_pokebola.append("🌕 **Moon Ball** (Superior à UB para tipos GHOST/DARK).")
+            dicas_pokebola.append("🌕 **Moon Ball** (Superior à UB para tipos GHOST/DARK - Fantasma/Sombrio).")
         
-        # Tinker Ball (ELECTRIC ou STEEL)
+        # Tinker Ball (ELECTRIC/STEEL) - Elétrico/Aço/Metal
         if any(t in types for t in ['ELECTRIC', 'STEEL']):
-            dicas_pokebola.append("🔩 **Tinker Ball** (Superior à UB para tipos ELECTRIC/STEEL).")
+            dicas_pokebola.append("🔩 **Tinker Ball** (Superior à UB para tipos ELECTRIC/STEEL - Elétrico/Aço).")
             
-        # Sora Ball (ICE ou FLYING)
+        # Sora Ball (ICE/FLYING) - Gelo/Voador
         if any(t in types for t in ['ICE', 'FLYING']):
-            dicas_pokebola.append("☁️ **Sora Ball** (Superior à UB para tipos ICE/FLYING).")
+            dicas_pokebola.append("☁️ **Sora Ball** (Superior à UB para tipos ICE/FLYING - Gelo/Voador).")
             
-        # Dusk Ball (ROCK ou FIGHTING)
+        # Dusk Ball (ROCK/FIGHTING) - Rocha/Pedra/Lutador
         if any(t in types for t in ['ROCK', 'FIGHTING']):
-            dicas_pokebola.append("🌑 **Dusk Ball** (Superior à UB para tipos ROCK/FIGHTING).")
+            dicas_pokebola.append("🌑 **Dusk Ball** (Superior à UB para tipos ROCK/FIGHTING - Rocha/Lutador).")
             
-        # Yume Ball (NORMAL ou PSYCHIC)
+        # Yume Ball (NORMAL/PSYCHIC) - Normal/Psíquico
         if any(t in types for t in ['NORMAL', 'PSYCHIC']):
-            dicas_pokebola.append("💭 **Yume Ball** (Superior à UB para tipos NORMAL/PSYCHIC).")
+            dicas_pokebola.append("💭 **Yume Ball** (Superior à UB para tipos NORMAL/PSYCHIC - Normal/Psíquico).")
             
-        # Tale Ball (DRAGON ou FAIRY)
+        # Tale Ball (DRAGON/FAIRY) - Dragão/Fada
         if any(t in types for t in ['DRAGON', 'FAIRY']):
-            dicas_pokebola.append("🐉 **Tale Ball** (Superior à UB para tipos DRAGON/FAIRY).")
+            dicas_pokebola.append("🐉 **Tale Ball** (Superior à UB para tipos DRAGON/FAIRY - Dragão/Fada).")
             
-        # Net Ball (BUG ou WATER)
+        # Net Ball (BUG/WATER) - Inseto/Água/Aquático
         if any(t in types for t in ['BUG', 'WATER']):
-            dicas_pokebola.append("💧 **Net Ball** (Superior à UB para tipos BUG/WATER).")
+            dicas_pokebola.append("💧 **Net Ball** (Superior à UB para tipos BUG/WATER - Inseto/Água).")
             
-        # Janguru Ball (POISON ou GRASS)
+        # Janguru Ball (POISON/GRASS) - Venenoso/Grama
         if any(t in types for t in ['POISON', 'GRASS']):
-            dicas_pokebola.append("🌿 **Janguru Ball** (Superior à UB para tipos POISON/GRASS).")
+            dicas_pokebola.append("🌿 **Janguru Ball** (Superior à UB para tipos POISON/GRASS - Venenoso/Grama).")
             
-        # Magu Ball (FIRE ou GROUND)
+        # Magu Ball (FIRE/GROUND) - Fogo/Terrestre/Chão/Terra
         if any(t in types for t in ['FIRE', 'GROUND']):
-            dicas_pokebola.append("🔥 **Magu Ball** (Superior à UB para tipos FIRE/GROUND).")
+            dicas_pokebola.append("🔥 **Magu Ball** (Superior à UB para tipos FIRE/GROUND - Fogo/Terrestre).")
 
         # Junta todas as dicas encontradas, separando-as por linha.
         dicas_texto = "\n".join(dicas_pokebola) if dicas_pokebola else "Nenhuma Pokebola especial de Engenheiro sugerida."
