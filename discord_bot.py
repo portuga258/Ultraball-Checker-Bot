@@ -19,26 +19,47 @@ LOCAL_DATA_FILE = "pokemons.json"
 POKEMON_DATA_CACHE = {}
 
 # Mapeamento de Tipos: (Seu Tipo no JSON Limpo/Sem Acento: Tipo Oficial)
+# Este mapeamento inclui TODAS as variações comuns em português (com acento removido)
+# para garantir que todos os Pokémons recebam a sugestão de Pokebola correta.
 TIPO_MAPPER = {
+    # Tipos Metálicos / Aço
     'metal': 'STEEL',
-    'psiquico': 'PSYCHIC',
+    'aco': 'STEEL',        # Adicionado para cobrir 'Aço'
+    
+    'psiquico': 'PSYCHIC', # Psíquico
     'fantasma': 'GHOST',
+    
+    # Tipos Sombrio / Noturno
     'sombrio': 'DARK',
-    'eletrico': 'ELECTRIC',
+    'noturno': 'DARK',
+    
+    'eletrico': 'ELECTRIC', # Elétrico
     'gelo': 'ICE',
     'voador': 'FLYING',
+    
+    # Tipos Rocha / Pedra
     'rocha': 'ROCK',
+    'pedra': 'ROCK',
+    
     'lutador': 'FIGHTING',
     'normal': 'NORMAL',
-    'dragao': 'DRAGON', # Adicionado/Confirmado
+    'dragao': 'DRAGON',    # Dragão
     'fada': 'FAIRY',
     'inseto': 'BUG',
-    'aquatico': 'WATER', # CORRIGIDO: Agora mapeia 'aquatico' para 'WATER'
+    
+    # Tipos Aquáticos / Água
+    'aquatico': 'WATER', 
+    'agua': 'WATER',
+    
+    # Tipos Terrestres / Venenosos
     'venenoso': 'POISON',
     'grama': 'GRASS',
     'fogo': 'FIRE',
-    'terrestre': 'GROUND',
-    # Adicione outros tipos se aparecerem erros
+    
+    # Tipos Terrestre / Chão / Terra
+    'terrestre': 'GROUND', 
+    'chao': 'GROUND',
+    'terra': 'GROUND',     # Adicionado para cobrir 'Terra'
 }
 
 # Configuração dos Intents (Permissões do Bot)
@@ -60,14 +81,31 @@ def load_pokemon_data():
     """
     global POKEMON_DATA_CACHE
     
-    # Função simples para remover acentos, cedilha e padronizar minúsculas antes do lookup
+    # Função robusta para remover acentos, cedilha e padronizar minúsculas antes do lookup
     def clean_type_key(name):
-        name = name.lower()
-        # Adicionado 'ç' e mais vogais acentuadas para garantir a limpeza
-        replacements = {'á': 'a', 'ã': 'a', 'é': 'e', 'ê': 'e', 'í': 'i', 'ó': 'o', 'õ': 'o', 'ú': 'u', 'ç': 'c'}
+        # 1. Converte para minúsculas primeiro para padronizar
+        name = str(name).lower()
+        # 2. Dicionário de substituição para acentos
+        replacements = {
+            'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a', 
+            'é': 'e', 'ê': 'e', 'ë': 'e', 
+            'í': 'i', 'î': 'i', 'ï': 'i', 
+            'ó': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
+            'ú': 'u', 'ü': 'u',
+            'ç': 'c',
+            # Versões maiúsculas
+            'Á': 'a', 'À': 'a', 'Ã': 'a', 'Â': 'a', 'Ä': 'a',
+            'É': 'e', 'Ê': 'e', 'Ë': 'e',
+            'Í': 'i', 'Î': 'i', 'Ï': 'i',
+            'Ó': 'o', 'Õ': 'o', 'Ô': 'o', 'Ö': 'o',
+            'Ú': 'u', 'Ü': 'u',
+            'Ç': 'c'
+        }
+        
         for old, new in replacements.items():
             name = name.replace(old, new)
-        return name
+            
+        return name.strip() # Garante que não haja espaços em branco indesejados
 
     if os.path.exists(LOCAL_DATA_FILE):
         print(f"Tentando carregar dados do arquivo local: {LOCAL_DATA_FILE}...")
@@ -89,11 +127,14 @@ def load_pokemon_data():
                         tipo_completo += f" / {tipo2_json}"
                     
                     # Mapeia os tipos para o formato oficial (necessário para a lógica das Pokebolas)
-                    # Usa a função de limpeza para garantir que acentos não atrapalhem a busca no TIPO_MAPPER
+                    
+                    # 1. Limpa o nome do tipo (ex: "Água" -> "agua", "Dragão" -> "dragao")
                     cleaned_tipo1 = clean_type_key(tipo1_json)
                     cleaned_tipo2 = clean_type_key(tipo2_json)
                     
-                    # Tenta mapear o tipo limpo. Se falhar, usa o tipo original em maiúsculas como fallback.
+                    # 2. Tenta mapear o tipo limpo. 
+                    # Se falhar (o tipo limpo não está no TIPO_MAPPER), usa o tipo original em MAIÚSCULAS
+                    # como fallback.
                     tipo1_oficial = TIPO_MAPPER.get(cleaned_tipo1, tipo1_json.upper())
                     tipo2_oficial = TIPO_MAPPER.get(cleaned_tipo2, tipo2_json.upper())
                     
@@ -202,7 +243,6 @@ async def check_poke_average(ctx, *, pokemon_name: str):
         # Corrigindo a lista de tipos para garantir que não haja erros de case ou N/A
         types_raw = [tipo1_oficial, tipo2_oficial]
         # Esta linha garante que a lista de tipos seja limpa, removendo N/A e padronizando o case
-        # Isso garante que a lista de comparação seja ['STEEL', 'PSYCHIC'] para o Bronzor
         types = [t.upper() for t in types_raw if t and t.upper() not in ['N/A', 'NENHUM']]
 
 
@@ -243,7 +283,6 @@ async def check_poke_average(ctx, *, pokemon_name: str):
             dicas_pokebola.append("🐉 **Tale Ball** (Superior à UB para tipos DRAGON/FAIRY).")
             
         # Net Ball (BUG ou WATER)
-        # ESTA CONDIÇÃO DEVE PASSAR para o Blastoise porque 'WATER' estará na lista 'types'
         if any(t in types for t in ['BUG', 'WATER']):
             dicas_pokebola.append("💧 **Net Ball** (Superior à UB para tipos BUG/WATER).")
             
