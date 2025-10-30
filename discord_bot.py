@@ -22,7 +22,7 @@ POKEMON_DATA_CACHE = {}
 # ATENÇÃO: Esta contagem será perdida se o bot for reiniciado.
 USER_REQUEST_COUNTS = {}
 PIX_KEY = "f88cbe7a-f244-44d8-b6f8-a3a88af516e0"
-PIX_INTERVAL = 10 # Intervalo de requests para pedir PIX
+PIX_INTERVAL = 10 # Intervalo de requests para pedir PIX (mantido, mas não usado para exibição)
 
 # Mapeamento de Tipos: (Seu Tipo no JSON Limpo/Sem Acento: Tipo Oficial)
 # Este mapeamento inclui TODAS as variações comuns em português (com acento removido)
@@ -220,7 +220,7 @@ async def on_command_error(ctx, error):
 async def check_poke_average(ctx, *, pokemon_name: str):
     """
     Processa o comando !poke <nome do pokemon> e exibe estatísticas em um Embed,
-    e verifica a contagem de comandos para o PIX.
+    e sempre exibe a mensagem de apoio ao PIX no final, se o comando for bem-sucedido.
     """
     global USER_REQUEST_COUNTS
 
@@ -230,27 +230,18 @@ async def check_poke_average(ctx, *, pokemon_name: str):
              await ctx.send(f"❌ **Erro de Dados:** O bot não pode funcionar. Verifique o arquivo '{LOCAL_DATA_FILE}'.")
              return
 
-    # 1. Rastreamento e Solicitação de PIX
+    # 1. Rastreamento da Contagem de Uso (agora apenas para a estatística no PIX)
     user_id = str(ctx.author.id)
     
     # Inicializa ou incrementa a contagem de requests do usuário
     USER_REQUEST_COUNTS[user_id] = USER_REQUEST_COUNTS.get(user_id, 0) + 1
     current_count = USER_REQUEST_COUNTS[user_id]
+    
+    # --- DEBUG: Mostra a contagem atual no console ---
+    print(f"DEBUG: Usuário {user_id} - Contagem de comandos: {current_count}")
+    # -------------------------------------------------
 
-    # Verifica se a contagem é um múltiplo do intervalo definido (a cada 10 requests)
-    if current_count % PIX_INTERVAL == 0:
-        pix_message = (
-            f"✨ **Aviso de Apoio ao Bot!** ✨\n"
-            f"Você já usou o comando `!poke` **{current_count} vezes**! Incrível!\n\n"
-            f"Se você gosta do bot e gostaria de ajudar a mantê-lo online e atualizado, "
-            f"considere fazer um PIX de qualquer valor para o desenvolvedor.\n"
-            # O texto foi atualizado para refletir que a chave é um alias/código e não um e-mail.
-            f"🔑 **Chave PIX (Alias/Copia e Cola):** `{PIX_KEY}`\n"
-            f"Seu apoio é muito importante! Obrigado!"
-        )
-        await ctx.send(pix_message)
-
-    # 2. Processamento do Comando !poke (Lógica Existente)
+    # 2. Processamento do Comando !poke
     search_key = pokemon_name.lower().strip()
     result = POKEMON_DATA_CACHE.get(search_key)
 
@@ -360,6 +351,21 @@ async def check_poke_average(ctx, *, pokemon_name: str):
         embed.add_field(name="Super Ball (SB)", value=f"`{sb_value}`", inline=True)
 
         await ctx.send(embed=embed)
+        
+        # 3. Solicitação de PIX (SEMPRE no final, após o resultado do comando)
+        pix_message = (
+            f"✨ **Aviso de Apoio ao Bot!** ✨\n"
+            f"Você já usou o comando `!poke` **{current_count} vezes**! Incrível!\n\n"
+            f"Se você gosta do bot e gostaria de ajudar a mantê-lo online e atualizado, "
+            f"considere fazer um PIX de qualquer valor para o desenvolvedor.\n"
+            f"🔑 **Chave PIX (Alias/Copia e Cola):** `{PIX_KEY}`\n"
+            f"Seu apoio é muito importante! Obrigado!"
+        )
+        await ctx.send(pix_message)
+        
+        # --- DEBUG: Confirma o envio da mensagem PIX no console ---
+        print(f"DEBUG: Mensagem PIX enviada para o usuário {user_id} na contagem {current_count}")
+        # --------------------------------------------------------
         
     else:
         # Pokémon não encontrado
