@@ -244,7 +244,8 @@ async def check_poke_average(ctx, *, pokemon_name: str):
             f"Você já usou o comando `!poke` **{current_count} vezes**! Incrível!\n\n"
             f"Se você gosta do bot e gostaria de ajudar a mantê-lo online e atualizado, "
             f"considere fazer um PIX de qualquer valor para o desenvolvedor.\n"
-            f"🔑 **Chave PIX (E-mail):** `{PIX_KEY}`\n"
+            # O texto foi atualizado para refletir que a chave é um alias/código e não um e-mail.
+            f"🔑 **Chave PIX (Alias/Copia e Cola):** `{PIX_KEY}`\n"
             f"Seu apoio é muito importante! Obrigado!"
         )
         await ctx.send(pix_message)
